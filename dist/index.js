@@ -36,12 +36,33 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(186));
+// eslint-disable-next-line prettier/prettier
 const wait_1 = __nccwpck_require__(817);
+// todo: get sdk and architecture inputs
+// todo: parse sdk to see about channels and sdk versions
+// todo: detect OS and architecture
+// todo: if using the 2.19.x, determine the latest 2.19 version
+// todo: if using a channel (stable), determine version
+// todo: download from:
+// # https://dart.dev/tools/sdk/archive#download-urls
+// PREFIX="https://storage.googleapis.com/dart-archive/channels"
+// BUILD="sdk/dartsdk-${OS}-${ARCH}-release.zip"
+// todo: use the cache based on the sdk os, version, ...
+// todo: download, unzip
+// todo: configure PUB_CACHE
+// todo: update paths
+// echo "DART_HOME=${DART_HOME}" >> $GITHUB_ENV
+// echo "${PUBCACHE}/bin" >> $GITHUB_PATH
+// echo "${RUNNER_TOOL_CACHE}/dart-sdk/bin" >> $GITHUB_PATH
+// todo: print version
+// todo: "When enabled through env variables, create OIDC token for publishing on pub.dev."
+// todo: exports
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const ms = core.getInput('milliseconds');
-            core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+            // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+            core.debug(`Waiting ${ms} milliseconds ...`);
             core.debug(new Date().toTimeString());
             yield (0, wait_1.wait)(parseInt(ms, 10));
             core.debug(new Date().toTimeString());

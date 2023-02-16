@@ -1,11 +1,26 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: "Setup Dart SDK"
+description: "Setup the Dart SDK, and add it to the PATH"
+branding:
+  icon: check-circle
+  color: blue
 inputs:
-  milliseconds: # change this
-    required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  sdk:
+    description: >-
+      The channel, or a specific version from a channel to install ('stable',
+      'beta', 'dev', '2.19.0', '2.12.0-1.4.beta'). Using one of the three
+      channels instead of a version will give you the latest version published
+      to that channel.
+    required: false
+    default: "stable"
+  architecture:
+    description: "The CPU architecture ('x64', 'ia32', 'arm', or 'arm64')."
+    required: false
+  flavor:
+    description: "The build flavor ('raw' or 'release')."
+    required: false
+outputs:
+  dart-version:
+    description: 'The installed dart version.'
 runs:
-  using: 'node16'
-  main: 'dist/index.js'
+  using: "node16"
+  main: "dist/index.js"
