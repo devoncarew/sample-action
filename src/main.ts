@@ -109,15 +109,6 @@ async function run(): Promise<void> {
 
     // Report success; print version.
     core.info('Successfully installed Dart SDK:')
-    await exec.exec('ls', ['-l'], {
-      cwd: sdkPath
-    })
-    await exec.exec('ls', ['-l'], {
-      cwd: path.join(sdkPath, 'bin')
-    })
-    await exec.exec('dart', ['--version'], {
-      cwd: path.join(sdkPath, 'bin')
-    })
     await exec.exec('dart', ['--version'])
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)

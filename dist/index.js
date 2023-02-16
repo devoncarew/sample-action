@@ -133,15 +133,6 @@ function run() {
             core.setOutput('dart-version', version);
             // Report success; print version.
             core.info('Successfully installed Dart SDK:');
-            yield exec.exec('ls', ['-l'], {
-                cwd: sdkPath
-            });
-            yield exec.exec('ls', ['-l'], {
-                cwd: path_1.default.join(sdkPath, 'bin')
-            });
-            yield exec.exec('dart', ['--version'], {
-                cwd: path_1.default.join(sdkPath, 'bin')
-            });
             yield exec.exec('dart', ['--version']);
         }
         catch (error) {
