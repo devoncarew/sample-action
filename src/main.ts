@@ -1,3 +1,4 @@
+import path from 'path'
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as system from './system'
@@ -78,7 +79,9 @@ async function run(): Promise<void> {
       core.info(`Downloading ${url}...`)
 
       const archivePath = await tc.downloadTool(url)
-      const extractedFolder = await tc.extractZip(archivePath, 'dart-sdk')
+      let extractedFolder = await tc.extractZip(archivePath)
+
+      extractedFolder = path.join(extractedFolder, 'dart-sdk')
 
       // todo: include flavor, ...
       sdkPath = await tc.cacheDir(
@@ -89,15 +92,17 @@ async function run(): Promise<void> {
       )
     }
 
-    let pubCache = `${process.env.HOME}/.pub-cache`
+    let pubCache
     if (os === 'windows') {
-      pubCache = `${process.env.USERPROFILE}\\.pub-cache`
+      pubCache = path.join(process.env['USERPROFILE'] as string, '.pub-cache')
+    } else {
+      pubCache = path.join(process.env['HOME'] as string, '.pub-cache')
     }
 
     core.exportVariable('DART_HOME', sdkPath)
-    core.addPath(sdkPath + core.toPlatformPath('/bin'))
+    core.addPath(path.join(sdkPath, 'bin'))
     core.exportVariable('PUB_CACHE', pubCache)
-    core.addPath(pubCache + core.toPlatformPath('/bin'))
+    core.addPath(path.join(pubCache, 'bin'))
 
     // Configure the outputs.
     core.setOutput('dart-version', version)
@@ -108,11 +113,12 @@ async function run(): Promise<void> {
       cwd: sdkPath
     })
     await exec.exec('ls', ['-l'], {
-      cwd: sdkPath + core.toPlatformPath('/bin')
+      cwd: path.join(sdkPath, 'bin')
     })
     await exec.exec('dart', ['--version'], {
-      cwd: sdkPath + core.toPlatformPath('/bin')
+      cwd: path.join(sdkPath, 'bin')
     })
+    await exec.exec('dart', ['--version'])
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }

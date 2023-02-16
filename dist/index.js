@@ -38,7 +38,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const path_1 = __importDefault(__nccwpck_require__(1017));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const system = __importStar(__nccwpck_require__(5785));
@@ -108,19 +112,23 @@ function run() {
             else {
                 core.info(`Downloading ${url}...`);
                 const archivePath = yield tc.downloadTool(url);
-                const extractedFolder = yield tc.extractZip(archivePath, 'dart-sdk');
+                let extractedFolder = yield tc.extractZip(archivePath);
+                extractedFolder = path_1.default.join(extractedFolder, 'dart-sdk');
                 // todo: include flavor, ...
                 sdkPath = yield tc.cacheDir(extractedFolder, 'dart', version, // todo: resolve to the actual version
                 architecture);
             }
-            let pubCache = `${process.env.HOME}/.pub-cache`;
+            let pubCache;
             if (os === 'windows') {
-                pubCache = `${process.env.USERPROFILE}\\.pub-cache`;
+                pubCache = path_1.default.join(process.env['USERPROFILE'], '.pub-cache');
+            }
+            else {
+                pubCache = path_1.default.join(process.env['HOME'], '.pub-cache');
             }
             core.exportVariable('DART_HOME', sdkPath);
-            core.addPath(sdkPath + core.toPlatformPath('/bin'));
+            core.addPath(path_1.default.join(sdkPath, 'bin'));
             core.exportVariable('PUB_CACHE', pubCache);
-            core.addPath(pubCache + core.toPlatformPath('/bin'));
+            core.addPath(path_1.default.join(pubCache, 'bin'));
             // Configure the outputs.
             core.setOutput('dart-version', version);
             // Report success; print version.
@@ -129,11 +137,12 @@ function run() {
                 cwd: sdkPath
             });
             yield exec.exec('ls', ['-l'], {
-                cwd: sdkPath + core.toPlatformPath('/bin')
+                cwd: path_1.default.join(sdkPath, 'bin')
             });
             yield exec.exec('dart', ['--version'], {
-                cwd: sdkPath + core.toPlatformPath('/bin')
+                cwd: path_1.default.join(sdkPath, 'bin')
             });
+            yield exec.exec('dart', ['--version']);
         }
         catch (error) {
             if (error instanceof Error)
