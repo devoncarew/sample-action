@@ -1,13 +1,15 @@
 name: 'build-test'
-on: # rebuild any PRs and main branch changes
+
+# rebuild any PRs and main branch changes
+on: 
   pull_request:
   push:
     branches:
       - main
-      - 'releases/*'
 
 jobs:
-  build: # make sure build/ci work properly
+  # make sure build/ci work properly
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -16,7 +18,8 @@ jobs:
       - run: |
           npm run all
 
-  test: # make sure the action works on a clean machine without building
+  # make sure the action works on a clean machine without building
+  test:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -25,6 +28,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         sdk: [2.18.0, stable, beta, dev]
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
       - uses: ./

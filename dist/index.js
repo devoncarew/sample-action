@@ -125,6 +125,12 @@ function run() {
             core.setOutput('dart-version', version);
             // Report success; print version.
             core.info('Successfully installed Dart SDK:');
+            yield exec.exec('ls', ['-l'], {
+                cwd: sdkPath
+            });
+            yield exec.exec('ls', ['-l'], {
+                cwd: sdkPath + core.toPlatformPath('/bin')
+            });
             yield exec.exec('dart', ['--version'], {
                 cwd: sdkPath + core.toPlatformPath('/bin')
             });
