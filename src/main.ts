@@ -28,6 +28,7 @@ async function run(): Promise<void> {
       core.setFailed(`Unrecognized build flavor '${flavor}'.`)
       return
     }
+    const raw = flavor === 'raw'
 
     // os
     const os: string = system.getPlatform()
@@ -44,10 +45,14 @@ async function run(): Promise<void> {
 
     if (sdk === 'stable' || sdk === 'beta' || sdk === 'dev') {
       channel = sdk
-      version = (await versions.getLatestVersion(channel, flavor)) as string
+      version = raw
+        ? 'latest'
+        : ((await versions.getLatestVersion(channel, flavor)) as string)
     } else if (sdk === 'main') {
       channel = 'be'
-      version = (await versions.getLatestVersion(channel, flavor)) as string
+      version = raw
+        ? 'latest'
+        : ((await versions.getLatestVersion(channel, flavor)) as string)
     } else {
       version = sdk
 
@@ -65,9 +70,14 @@ async function run(): Promise<void> {
     }
 
     core.info(
-      `Installing Dart SDK ${version} from the ` +
-        `${channel}-${flavor} channel (${os}-${architecture})`
+      `Installing the ${os}-${architecture} Dart SDK version ${version} from ` +
+        `the ${channel} (${flavor}) channel.`
     )
+
+    // should be:
+    // https://storage.googleapis.com/dart-archive/channels/be/raw/latest/sdk/dartsdk-linux-x64-release.zip...
+    // is:
+    // https://storage.googleapis.com/dart-archive/channels/be/raw/3.0.0-edge.71bbeddf0004f1d1992fbc54d56aa99b4f95cb0a/sdk/dartsdk-linux-x64-release.zip
 
     // Calculate url based on https://dart.dev/tools/sdk/archive#download-urls.
     const url =
@@ -75,17 +85,15 @@ async function run(): Promise<void> {
       `channels/${channel}/${flavor}/${version}/sdk/` +
       `dartsdk-${os}-${architecture}-release.zip`
 
-    // todo: remove
-    let cachedVersions = tc.findAllVersions('dart')
-    core.info(`cached versions of dart available: ${cachedVersions}`)
-
     // use cached sdk, or download and cache the sdk
-    const toolName = flavor === 'raw' ? 'dart-be' : 'dart'
-    let sdkPath = tc.find(toolName, version, architecture)
+    const toolName = flavor === 'raw' ? 'dart_raw' : 'dart'
+
+    // Using a 'raw' sdk flavor disables caching.
+    let sdkPath = !raw ? tc.find(toolName, version, architecture) : null
     if (sdkPath) {
       core.info(`Using cached sdk from ${sdkPath}.`)
     } else {
-      core.info(`Downloading ${url}...`)
+      core.info(url)
 
       const archivePath = await tc.downloadTool(url)
       let extractedFolder = await tc.extractZip(archivePath)
@@ -98,10 +106,6 @@ async function run(): Promise<void> {
         architecture
       )
     }
-
-    // todo: remove
-    cachedVersions = tc.findAllVersions('dart')
-    core.info(`cached versions of dart available: ${cachedVersions}`)
 
     let pubCache
     if (os === 'windows') {
