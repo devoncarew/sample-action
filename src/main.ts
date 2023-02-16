@@ -1,3 +1,4 @@
+import path from 'path'
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as system from './system'
@@ -71,17 +72,19 @@ async function run(): Promise<void> {
     }
 
     // todo: use flavor, ...
-    let cachedPath = tc.find('dart', version, architecture)
-    if (cachedPath) {
-      core.info(`Using cached sdk from ${cachedPath}.`)
+    let sdkPath = tc.find('dart', version, architecture)
+    if (sdkPath) {
+      core.info(`Using cached sdk from ${sdkPath}.`)
     } else {
       core.info(`Downloading ${url}...`)
 
       const archivePath = await tc.downloadTool(url)
-      const extractedFolder = await tc.extractZip(archivePath, 'dart-sdk')
+      let extractedFolder = await tc.extractZip(archivePath)
+
+      extractedFolder = path.join(extractedFolder, 'dart-sdk')
 
       // todo: include flavor, ...
-      cachedPath = await tc.cacheDir(
+      sdkPath = await tc.cacheDir(
         extractedFolder,
         'dart',
         version, // todo: resolve to the actual version
@@ -89,15 +92,17 @@ async function run(): Promise<void> {
       )
     }
 
-    let pubCache = `${process.env.HOME}/.pub-cache`
+    let pubCache
     if (os === 'windows') {
-      pubCache = `${process.env.USERPROFILE}\\.pub-cache`
+      pubCache = path.join(process.env['USERPROFILE'] as string, '.pub-cache')
+    } else {
+      pubCache = path.join(process.env['HOME'] as string, '.pub-cache')
     }
 
-    core.exportVariable('DART_HOME', cachedPath)
-    core.addPath(cachedPath + core.toPlatformPath('/bin'))
+    core.exportVariable('DART_HOME', sdkPath)
+    core.addPath(path.join(sdkPath, 'bin'))
     core.exportVariable('PUB_CACHE', pubCache)
-    core.addPath(pubCache + core.toPlatformPath('/bin'))
+    core.addPath(path.join(pubCache, 'bin'))
 
     // Configure the outputs.
     core.setOutput('dart-version', version)
