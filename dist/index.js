@@ -46,44 +46,21 @@ const path_1 = __importDefault(__nccwpck_require__(1017));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const system = __importStar(__nccwpck_require__(5785));
+const versions = __importStar(__nccwpck_require__(7332));
 const tc = __importStar(__nccwpck_require__(7784));
 // todo: if using the 2.19.x, determine the latest 2.19 version
-// todo: if using a channel (stable), determine version
 // todo: "When enabled through env variables, create OIDC token for publishing
 //       on pub.dev."
+// todo: cache pub dirs?
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            // sdk
             let sdk = core.getInput('sdk');
             if (sdk.length === 0) {
                 sdk = 'stable';
             }
-            let architecture = core.getInput('architecture');
-            if (architecture.length === 0) {
-                architecture = system.getArch();
-            }
-            const os = system.getPlatform();
-            let version;
-            let channel;
-            if (sdk === 'stable' || sdk === 'beta' || sdk === 'dev' || sdk === 'main') {
-                version = 'latest';
-                channel = sdk;
-            }
-            else {
-                version = sdk;
-                channel = 'stable';
-                // Derive the channel from the version string
-                if (sdk.includes('dev')) {
-                    channel = 'dev';
-                }
-                else if (sdk.includes('beta')) {
-                    channel = 'beta';
-                }
-                else if (sdk.includes('main')) {
-                    core.setFailed('Versions cannot be specified for builds from the main channel.');
-                    return;
-                }
-            }
+            // flavor
             let flavor = core.getInput('flavor');
             if (flavor.length === 0) {
                 flavor = sdk === 'main' ? 'raw' : 'release';
@@ -92,20 +69,53 @@ function run() {
                 core.setFailed(`Unrecognized build flavor '${flavor}'.`);
                 return;
             }
-            core.info(`Installing Dart SDK version '${version}' from the ${channel} channel (${flavor}) on ${os}-${architecture}`);
-            // Calculate download Url based on
-            // https://dart.dev/tools/sdk/archive#download-urls.
-            const prefix = 'https://storage.googleapis.com/dart-archive/channels';
-            const build = `sdk/dartsdk-${os}-${architecture}-release.zip`;
-            let url;
-            if (sdk === 'main') {
-                url = `${prefix}/be/raw/latest/${build}`;
+            // os
+            const os = system.getPlatform();
+            // architecture
+            let architecture = core.getInput('architecture');
+            if (architecture.length === 0) {
+                architecture = system.getArch();
+            }
+            // calculate version and channel
+            let version;
+            let channel;
+            if (sdk === 'stable' || sdk === 'beta' || sdk === 'dev') {
+                channel = sdk;
+                version = (yield versions.getLatestVersion(channel, flavor));
+            }
+            else if (sdk === 'main') {
+                channel = 'be';
+                version = (yield versions.getLatestVersion(channel, flavor));
             }
             else {
-                url = `${prefix}/${channel}/${flavor}/${version}/${build}`;
+                version = sdk;
+                // Derive the channel from the version string.
+                if (sdk.includes('dev')) {
+                    channel = 'dev';
+                }
+                else if (sdk.includes('beta')) {
+                    channel = 'beta';
+                }
+                else if (sdk.includes('main')) {
+                    core.setFailed('Versions cannot be specified for main channel builds.');
+                    return;
+                }
+                else {
+                    channel = 'stable';
+                }
             }
-            // todo: use flavor, ...
-            let sdkPath = tc.find('dart', version, architecture);
+            core.info(`Installing Dart SDK ${version} from the ` +
+                `${channel}-${flavor} channel (${os}-${architecture})`);
+            // Calculate url based on https://dart.dev/tools/sdk/archive#download-urls.
+            const url = 'https://storage.googleapis.com/dart-archive/' +
+                `channels/${channel}/${flavor}/${version}/sdk/` +
+                `dartsdk-${os}-${architecture}-release.zip`;
+            // todo: remove
+            let cachedVersions = tc.findAllVersions('dart');
+            core.info(`cached versions of dart available: ${cachedVersions}`);
+            // use cached sdk, or download and cache the sdk
+            const toolName = flavor === 'raw' ? 'dart-be' : 'dart';
+            let sdkPath = tc.find(toolName, version, architecture);
             if (sdkPath) {
                 core.info(`Using cached sdk from ${sdkPath}.`);
             }
@@ -114,10 +124,11 @@ function run() {
                 const archivePath = yield tc.downloadTool(url);
                 let extractedFolder = yield tc.extractZip(archivePath);
                 extractedFolder = path_1.default.join(extractedFolder, 'dart-sdk');
-                // todo: include flavor, ...
-                sdkPath = yield tc.cacheDir(extractedFolder, 'dart', version, // todo: resolve to the actual version
-                architecture);
+                sdkPath = yield tc.cacheDir(extractedFolder, toolName, version, architecture);
             }
+            // todo: remove
+            cachedVersions = tc.findAllVersions('dart');
+            core.info(`cached versions of dart available: ${cachedVersions}`);
             let pubCache;
             if (os === 'windows') {
                 pubCache = path_1.default.join(process.env['USERPROFILE'], '.pub-cache');
@@ -130,9 +141,9 @@ function run() {
             core.exportVariable('PUB_CACHE', pubCache);
             core.addPath(path_1.default.join(pubCache, 'bin'));
             // Configure the outputs.
+            core.setOutput('dart-home', sdkPath);
             core.setOutput('dart-version', version);
             // Report success; print version.
-            core.info('Successfully installed Dart SDK:');
             yield exec.exec('dart', ['--version']);
         }
         catch (error) {
@@ -183,6 +194,69 @@ function getArch() {
     }
 }
 exports.getArch = getArch;
+
+
+/***/ }),
+
+/***/ 7332:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getLatestVersion = void 0;
+const hc = __importStar(__nccwpck_require__(6255));
+// https://storage.googleapis.com/dart-archive/channels/stable/release/latest/VERSION
+// {
+//   "date": "2023-02-07",
+//   "version": "2.19.2",
+//   "revision": "e46b4f59490230778e907bde2eedb06b062d31be"
+// }
+function getLatestVersion(channel, flavor) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const url = 'https://storage.googleapis.com/dart-archive/channels/' +
+            `${channel}/${flavor}/latest/VERSION`;
+        const http = new hc.HttpClient('setup-dart', [], {
+            allowRedirects: true,
+            maxRedirects: 3
+        });
+        const result = (yield http.getJson(url)).result;
+        return result == null ? null : result.version;
+    });
+}
+exports.getLatestVersion = getLatestVersion;
 
 
 /***/ }),
