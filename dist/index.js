@@ -104,15 +104,12 @@ function run() {
                     channel = 'stable';
                 }
             }
-            core.info(`Installing Dart SDK ${version} from the ` +
-                `${channel}-${flavor} channel (${os}-${architecture})`);
+            core.info(`Installing the ${os}-${architecture} Dart SDK version ${version} from ` +
+                `the ${channel} (${flavor}) channel.`);
             // Calculate url based on https://dart.dev/tools/sdk/archive#download-urls.
             const url = 'https://storage.googleapis.com/dart-archive/' +
                 `channels/${channel}/${flavor}/${version}/sdk/` +
                 `dartsdk-${os}-${architecture}-release.zip`;
-            // todo: remove
-            let cachedVersions = tc.findAllVersions('dart');
-            core.info(`cached versions of dart available: ${cachedVersions}`);
             // use cached sdk, or download and cache the sdk
             const toolName = flavor === 'raw' ? 'dart-be' : 'dart';
             let sdkPath = tc.find(toolName, version, architecture);
@@ -120,15 +117,12 @@ function run() {
                 core.info(`Using cached sdk from ${sdkPath}.`);
             }
             else {
-                core.info(`Downloading ${url}...`);
+                core.info(url);
                 const archivePath = yield tc.downloadTool(url);
                 let extractedFolder = yield tc.extractZip(archivePath);
                 extractedFolder = path_1.default.join(extractedFolder, 'dart-sdk');
                 sdkPath = yield tc.cacheDir(extractedFolder, toolName, version, architecture);
             }
-            // todo: remove
-            cachedVersions = tc.findAllVersions('dart');
-            core.info(`cached versions of dart available: ${cachedVersions}`);
             let pubCache;
             if (os === 'windows') {
                 pubCache = path_1.default.join(process.env['USERPROFILE'], '.pub-cache');

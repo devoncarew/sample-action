@@ -65,8 +65,8 @@ async function run(): Promise<void> {
     }
 
     core.info(
-      `Installing Dart SDK ${version} from the ` +
-        `${channel}-${flavor} channel (${os}-${architecture})`
+      `Installing the ${os}-${architecture} Dart SDK version ${version} from ` +
+        `the ${channel} (${flavor}) channel.`
     )
 
     // Calculate url based on https://dart.dev/tools/sdk/archive#download-urls.
@@ -75,17 +75,13 @@ async function run(): Promise<void> {
       `channels/${channel}/${flavor}/${version}/sdk/` +
       `dartsdk-${os}-${architecture}-release.zip`
 
-    // todo: remove
-    let cachedVersions = tc.findAllVersions('dart')
-    core.info(`cached versions of dart available: ${cachedVersions}`)
-
     // use cached sdk, or download and cache the sdk
     const toolName = flavor === 'raw' ? 'dart-be' : 'dart'
     let sdkPath = tc.find(toolName, version, architecture)
     if (sdkPath) {
       core.info(`Using cached sdk from ${sdkPath}.`)
     } else {
-      core.info(`Downloading ${url}...`)
+      core.info(url)
 
       const archivePath = await tc.downloadTool(url)
       let extractedFolder = await tc.extractZip(archivePath)
@@ -98,10 +94,6 @@ async function run(): Promise<void> {
         architecture
       )
     }
-
-    // todo: remove
-    cachedVersions = tc.findAllVersions('dart')
-    core.info(`cached versions of dart available: ${cachedVersions}`)
 
     let pubCache
     if (os === 'windows') {
