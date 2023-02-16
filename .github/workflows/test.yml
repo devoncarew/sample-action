@@ -37,3 +37,67 @@ jobs:
       - run: dart pub get
       - run: dart analyze
       - run: dart run bin/example.dart
+
+  # test channel detection
+  test-channel-detection:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: example
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        sdk: [2.12.0-1.4.beta]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./
+        with:
+          sdk: ${{ matrix.sdk }}
+      - run: dart pub get
+      - run: dart analyze
+      - run: dart run bin/example.dart
+
+  # test using flavors
+  test-flavor:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: example
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        sdk: [stable, main]
+        flavor: [raw]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./
+        with:
+          sdk: ${{ matrix.sdk }}
+          flavor: ${{ matrix.flavor }}
+      - run: dart pub get
+      - run: dart analyze
+      - run: dart run bin/example.dart
+
+  # test using arch
+  test-arch:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: example
+    strategy:
+      matrix:
+        os: [windows-latest]
+        sdk: [stable]
+        architecture: [ia32]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./
+        with:
+          sdk: ${{ matrix.sdk }}
+          architecture: ${{ matrix.architecture }}
+      - run: dart pub get
+      - run: dart analyze
+      - run: dart run bin/example.dart

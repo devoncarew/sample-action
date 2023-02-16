@@ -2,52 +2,25 @@ import path from 'path'
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as system from './system'
+import * as versions from './versions'
 import * as tc from '@actions/tool-cache'
 
 // todo: if using the 2.19.x, determine the latest 2.19 version
 
-// todo: if using a channel (stable), determine version
-
 // todo: "When enabled through env variables, create OIDC token for publishing
 //       on pub.dev."
 
+// todo: cache pub dirs?
+
 async function run(): Promise<void> {
   try {
+    // sdk
     let sdk: string = core.getInput('sdk')
     if (sdk.length === 0) {
       sdk = 'stable'
     }
 
-    let architecture: string = core.getInput('architecture')
-    if (architecture.length === 0) {
-      architecture = system.getArch()
-    }
-
-    const os: string = system.getPlatform()
-
-    let version: string
-    let channel: string
-
-    if (sdk === 'stable' || sdk === 'beta' || sdk === 'dev' || sdk === 'main') {
-      version = 'latest'
-      channel = sdk
-    } else {
-      version = sdk
-      channel = 'stable'
-
-      // Derive the channel from the version string
-      if (sdk.includes('dev')) {
-        channel = 'dev'
-      } else if (sdk.includes('beta')) {
-        channel = 'beta'
-      } else if (sdk.includes('main')) {
-        core.setFailed(
-          'Versions cannot be specified for builds from the main channel.'
-        )
-        return
-      }
-    }
-
+    // flavor
     let flavor: string = core.getInput('flavor')
     if (flavor.length === 0) {
       flavor = sdk === 'main' ? 'raw' : 'release'
@@ -56,23 +29,59 @@ async function run(): Promise<void> {
       return
     }
 
-    core.info(
-      `Installing Dart SDK version '${version}' from the ${channel} channel (${flavor}) on ${os}-${architecture}`
-    )
+    // os
+    const os: string = system.getPlatform()
 
-    // Calculate download Url based on
-    // https://dart.dev/tools/sdk/archive#download-urls.
-    const prefix = 'https://storage.googleapis.com/dart-archive/channels'
-    const build = `sdk/dartsdk-${os}-${architecture}-release.zip`
-    let url: string
-    if (sdk === 'main') {
-      url = `${prefix}/be/raw/latest/${build}`
-    } else {
-      url = `${prefix}/${channel}/${flavor}/${version}/${build}`
+    // architecture
+    let architecture: string = core.getInput('architecture')
+    if (architecture.length === 0) {
+      architecture = system.getArch()
     }
 
-    // todo: use flavor, ...
-    let sdkPath = tc.find('dart', version, architecture)
+    // calculate version and channel
+    let version: string
+    let channel: string
+
+    if (sdk === 'stable' || sdk === 'beta' || sdk === 'dev') {
+      channel = sdk
+      version = (await versions.getLatestVersion(channel, flavor)) as string
+    } else if (sdk === 'main') {
+      channel = 'be'
+      version = (await versions.getLatestVersion(channel, flavor)) as string
+    } else {
+      version = sdk
+
+      // Derive the channel from the version string.
+      if (sdk.includes('dev')) {
+        channel = 'dev'
+      } else if (sdk.includes('beta')) {
+        channel = 'beta'
+      } else if (sdk.includes('main')) {
+        core.setFailed('Versions cannot be specified for main channel builds.')
+        return
+      } else {
+        channel = 'stable'
+      }
+    }
+
+    core.info(
+      `Installing Dart SDK ${version} from the ` +
+        `${channel}-${flavor} channel (${os}-${architecture})`
+    )
+
+    // Calculate url based on https://dart.dev/tools/sdk/archive#download-urls.
+    const url =
+      'https://storage.googleapis.com/dart-archive/' +
+      `channels/${channel}/${flavor}/${version}/sdk/` +
+      `dartsdk-${os}-${architecture}-release.zip`
+
+    // todo: remove
+    let cachedVersions = tc.findAllVersions('dart')
+    core.info(`cached versions of dart available: ${cachedVersions}`)
+
+    // use cached sdk, or download and cache the sdk
+    const toolName = flavor === 'raw' ? 'dart-be' : 'dart'
+    let sdkPath = tc.find(toolName, version, architecture)
     if (sdkPath) {
       core.info(`Using cached sdk from ${sdkPath}.`)
     } else {
@@ -80,17 +89,19 @@ async function run(): Promise<void> {
 
       const archivePath = await tc.downloadTool(url)
       let extractedFolder = await tc.extractZip(archivePath)
-
       extractedFolder = path.join(extractedFolder, 'dart-sdk')
 
-      // todo: include flavor, ...
       sdkPath = await tc.cacheDir(
         extractedFolder,
-        'dart',
-        version, // todo: resolve to the actual version
+        toolName,
+        version,
         architecture
       )
     }
+
+    // todo: remove
+    cachedVersions = tc.findAllVersions('dart')
+    core.info(`cached versions of dart available: ${cachedVersions}`)
 
     let pubCache
     if (os === 'windows') {
@@ -105,10 +116,10 @@ async function run(): Promise<void> {
     core.addPath(path.join(pubCache, 'bin'))
 
     // Configure the outputs.
+    core.setOutput('dart-home', sdkPath)
     core.setOutput('dart-version', version)
 
     // Report success; print version.
-    core.info('Successfully installed Dart SDK:')
     await exec.exec('dart', ['--version'])
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
