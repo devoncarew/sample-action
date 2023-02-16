@@ -71,9 +71,9 @@ async function run(): Promise<void> {
     }
 
     // todo: use flavor, ...
-    let cachedPath = tc.find('dart', version, architecture)
-    if (cachedPath) {
-      core.info(`Using cached sdk from ${cachedPath}.`)
+    let sdkPath = tc.find('dart', version, architecture)
+    if (sdkPath) {
+      core.info(`Using cached sdk from ${sdkPath}.`)
     } else {
       core.info(`Downloading ${url}...`)
 
@@ -81,7 +81,7 @@ async function run(): Promise<void> {
       const extractedFolder = await tc.extractZip(archivePath, 'dart-sdk')
 
       // todo: include flavor, ...
-      cachedPath = await tc.cacheDir(
+      sdkPath = await tc.cacheDir(
         extractedFolder,
         'dart',
         version, // todo: resolve to the actual version
@@ -94,8 +94,8 @@ async function run(): Promise<void> {
       pubCache = `${process.env.USERPROFILE}\\.pub-cache`
     }
 
-    core.exportVariable('DART_HOME', cachedPath)
-    core.addPath(cachedPath + core.toPlatformPath('/bin'))
+    core.exportVariable('DART_HOME', sdkPath)
+    core.addPath(sdkPath + core.toPlatformPath('/bin'))
     core.exportVariable('PUB_CACHE', pubCache)
     core.addPath(pubCache + core.toPlatformPath('/bin'))
 
@@ -104,7 +104,9 @@ async function run(): Promise<void> {
 
     // Report success; print version.
     core.info('Successfully installed Dart SDK:')
-    await exec.exec('dart', ['--version'])
+    await exec.exec('dart', ['--version'], {
+      cwd: sdkPath + core.toPlatformPath('/bin')
+    })
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
