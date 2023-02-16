@@ -71,7 +71,7 @@ async function run(): Promise<void> {
 
     core.info(
       `Installing the ${os}-${architecture} Dart SDK version ${version} from ` +
-      `the ${channel} (${flavor}) channel.`
+        `the ${channel} (${flavor}) channel.`
     )
 
     // should be:
