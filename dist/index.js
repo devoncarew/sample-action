@@ -45,6 +45,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
+const sdk_utils = __importStar(__nccwpck_require__(6557));
 const system = __importStar(__nccwpck_require__(5785));
 const versions = __importStar(__nccwpck_require__(7332));
 const tc = __importStar(__nccwpck_require__(7784));
@@ -111,10 +112,6 @@ function run() {
             }
             core.info(`Installing the ${os}-${architecture} Dart SDK version ${version} from ` +
                 `the ${channel} (${flavor}) channel.`);
-            // should be:
-            // https://storage.googleapis.com/dart-archive/channels/be/raw/latest/sdk/dartsdk-linux-x64-release.zip...
-            // is:
-            // https://storage.googleapis.com/dart-archive/channels/be/raw/3.0.0-edge.71bbeddf0004f1d1992fbc54d56aa99b4f95cb0a/sdk/dartsdk-linux-x64-release.zip
             // Calculate url based on https://dart.dev/tools/sdk/archive#download-urls.
             const url = 'https://storage.googleapis.com/dart-archive/' +
                 `channels/${channel}/${flavor}/${version}/sdk/` +
@@ -145,8 +142,12 @@ function run() {
             core.exportVariable('PUB_CACHE', pubCache);
             core.addPath(path_1.default.join(pubCache, 'bin'));
             // Configure the outputs.
-            core.setOutput('dart-home', sdkPath);
-            core.setOutput('dart-version', version);
+            if (raw) {
+                core.setOutput('dart-version', sdk_utils.getVersionFromSdk(sdkPath));
+            }
+            else {
+                core.setOutput('dart-version', version);
+            }
             // Report success; print version.
             yield exec.exec('dart', ['--version']);
         }
@@ -157,6 +158,32 @@ function run() {
     });
 }
 run();
+
+
+/***/ }),
+
+/***/ 6557:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getVersionFromSdk = void 0;
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+const path_1 = __importDefault(__nccwpck_require__(1017));
+function getVersionFromSdk(sdkPath) {
+    const versionFilePath = path_1.default.join(sdkPath, 'version');
+    if (fs_1.default.existsSync(versionFilePath)) {
+        return fs_1.default.readFileSync(versionFilePath, 'utf8').trim();
+    }
+    else {
+        return null;
+    }
+}
+exports.getVersionFromSdk = getVersionFromSdk;
 
 
 /***/ }),

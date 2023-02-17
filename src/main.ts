@@ -1,6 +1,7 @@
 import path from 'path'
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
+import * as sdk_utils from './sdk'
 import * as system from './system'
 import * as versions from './versions'
 import * as tc from '@actions/tool-cache'
@@ -74,11 +75,6 @@ async function run(): Promise<void> {
         `the ${channel} (${flavor}) channel.`
     )
 
-    // should be:
-    // https://storage.googleapis.com/dart-archive/channels/be/raw/latest/sdk/dartsdk-linux-x64-release.zip...
-    // is:
-    // https://storage.googleapis.com/dart-archive/channels/be/raw/3.0.0-edge.71bbeddf0004f1d1992fbc54d56aa99b4f95cb0a/sdk/dartsdk-linux-x64-release.zip
-
     // Calculate url based on https://dart.dev/tools/sdk/archive#download-urls.
     const url =
       'https://storage.googleapis.com/dart-archive/' +
@@ -120,8 +116,11 @@ async function run(): Promise<void> {
     core.addPath(path.join(pubCache, 'bin'))
 
     // Configure the outputs.
-    core.setOutput('dart-home', sdkPath)
-    core.setOutput('dart-version', version)
+    if (raw) {
+      core.setOutput('dart-version', sdk_utils.getVersionFromSdk(sdkPath))
+    } else {
+      core.setOutput('dart-version', version)
+    }
 
     // Report success; print version.
     await exec.exec('dart', ['--version'])

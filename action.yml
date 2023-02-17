@@ -19,8 +19,6 @@ inputs:
     description: "The build flavor ('raw' or 'release')."
     required: false
 outputs:
-  dart-home:
-    description: 'The installed Dart path.'
   dart-version:
     description: 'The installed Dart version.'
 runs:
