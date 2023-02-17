@@ -29,6 +29,134 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const setup = __importStar(__nccwpck_require__(7391));
+setup.install();
+
+
+/***/ }),
+
+/***/ 5980:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createPubOIDCToken = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const exec = __importStar(__nccwpck_require__(1514));
+// When enabled through env variables, create OIDC token for publishing on
+// pub.dev.
+function createPubOIDCToken() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tokenRequestUrl = process.env['ACTIONS_ID_TOKEN_REQUEST_URL'];
+        const tokenRequestToken = process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'];
+        if (tokenRequestUrl == null || tokenRequestToken == null) {
+            return;
+        }
+        const token = yield core.getIDToken('https://pub.dev');
+        core.exportVariable('PUB_TOKEN', token);
+        yield exec.exec('dart', [
+            'pub',
+            'token',
+            'add',
+            'https://pub.dev',
+            '--env-var',
+            'PUB_TOKEN'
+        ]);
+    });
+}
+exports.createPubOIDCToken = createPubOIDCToken;
+
+
+/***/ }),
+
+/***/ 6557:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getVersionFromSdk = void 0;
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+const path_1 = __importDefault(__nccwpck_require__(1017));
+function getVersionFromSdk(sdkPath) {
+    const versionFilePath = path_1.default.join(sdkPath, 'version');
+    if (fs_1.default.existsSync(versionFilePath)) {
+        return fs_1.default.readFileSync(versionFilePath, 'utf8').trim();
+    }
+    else {
+        return null;
+    }
+}
+exports.getVersionFromSdk = getVersionFromSdk;
+
+
+/***/ }),
+
+/***/ 7391:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -42,18 +170,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.install = void 0;
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const sdk_utils = __importStar(__nccwpck_require__(6557));
 const system = __importStar(__nccwpck_require__(5785));
+const odic = __importStar(__nccwpck_require__(5980));
 const versions = __importStar(__nccwpck_require__(7332));
 const tc = __importStar(__nccwpck_require__(7784));
-// todo: if using the 2.19.x, determine the latest 2.19 version
-// todo: "When enabled through env variables, create OIDC token for publishing
-//       on pub.dev."
-// todo: cache pub dirs?
-function run() {
+// TODO: Support version patterns of '2.19.x' to mean the latest 2.19 version.
+// TODO: Cache pub packages; have an input flag to control this.
+// TODO: have an input parameter to control creation of the ODIC token?
+function install() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // sdk
@@ -85,13 +214,13 @@ function run() {
                 channel = sdk;
                 version = raw
                     ? 'latest'
-                    : (yield versions.getLatestVersion(channel, flavor));
+                    : (yield versions.latestPublishedVersion(channel, flavor));
             }
             else if (sdk === 'main') {
                 channel = 'be';
                 version = raw
                     ? 'latest'
-                    : (yield versions.getLatestVersion(channel, flavor));
+                    : (yield versions.latestPublishedVersion(channel, flavor));
             }
             else {
                 version = sdk;
@@ -116,9 +245,9 @@ function run() {
             const url = 'https://storage.googleapis.com/dart-archive/' +
                 `channels/${channel}/${flavor}/${version}/sdk/` +
                 `dartsdk-${os}-${architecture}-release.zip`;
-            // use cached sdk, or download and cache the sdk
+            // Use a cached sdk or download and cache the sdk; using a 'raw' sdk flavor
+            // disables caching.
             const toolName = flavor === 'raw' ? 'dart_raw' : 'dart';
-            // Using a 'raw' sdk flavor disables caching.
             let sdkPath = !raw ? tc.find(toolName, version, architecture) : null;
             if (sdkPath) {
                 core.info(`Using cached sdk from ${sdkPath}.`);
@@ -130,17 +259,13 @@ function run() {
                 extractedFolder = path_1.default.join(extractedFolder, 'dart-sdk');
                 sdkPath = yield tc.cacheDir(extractedFolder, toolName, version, architecture);
             }
-            let pubCache;
-            if (os === 'windows') {
-                pubCache = path_1.default.join(process.env['USERPROFILE'], '.pub-cache');
-            }
-            else {
-                pubCache = path_1.default.join(process.env['HOME'], '.pub-cache');
-            }
+            const pubCache = path_1.default.join(process.env[os === 'windows' ? 'USERPROFILE' : 'HOME'], '.pub-cache');
             core.exportVariable('DART_HOME', sdkPath);
             core.addPath(path_1.default.join(sdkPath, 'bin'));
             core.exportVariable('PUB_CACHE', pubCache);
             core.addPath(path_1.default.join(pubCache, 'bin'));
+            // Potentially create the ODIC token used for pub.dev publishing.
+            odic.createPubOIDCToken();
             // Configure the outputs.
             if (raw) {
                 core.setOutput('dart-version', sdk_utils.getVersionFromSdk(sdkPath));
@@ -157,72 +282,32 @@ function run() {
         }
     });
 }
-run();
-
-
-/***/ }),
-
-/***/ 6557:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getVersionFromSdk = void 0;
-const fs_1 = __importDefault(__nccwpck_require__(7147));
-const path_1 = __importDefault(__nccwpck_require__(1017));
-function getVersionFromSdk(sdkPath) {
-    const versionFilePath = path_1.default.join(sdkPath, 'version');
-    if (fs_1.default.existsSync(versionFilePath)) {
-        return fs_1.default.readFileSync(versionFilePath, 'utf8').trim();
-    }
-    else {
-        return null;
-    }
-}
-exports.getVersionFromSdk = getVersionFromSdk;
+exports.install = install;
 
 
 /***/ }),
 
 /***/ 5785:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getArch = exports.getPlatform = void 0;
-const os_1 = __importDefault(__nccwpck_require__(2037));
+const os_1 = __nccwpck_require__(2037);
+// Returns 'linux', 'windows', or 'macos'.
 function getPlatform() {
-    const plat = os_1.default.platform();
-    // return either 'linux', 'windows', or 'macos'
-    if (plat === 'win32') {
-        return 'windows';
-    }
-    else if (plat === 'darwin') {
-        return 'macos';
-    }
-    else {
-        return 'linux';
-    }
+    return (0, os_1.platform)() === 'win32'
+        ? 'windows'
+        : (0, os_1.platform)() === 'darwin'
+            ? 'macos'
+            : 'linux';
 }
 exports.getPlatform = getPlatform;
+// Returns 'x64', 'ia32', 'arm', or 'arm64'.
 function getArch() {
-    // return 'x64', 'ia32', 'arm', or 'arm64'
     const supported = ['x64', 'ia32', 'arm', 'arm64'];
-    const arch = os_1.default.arch();
-    if (supported.includes(arch)) {
-        return arch;
-    }
-    else {
-        return 'x64';
-    }
+    return supported.includes((0, os_1.arch)()) ? (0, os_1.arch)() : 'x64';
 }
 exports.getArch = getArch;
 
@@ -267,7 +352,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getLatestVersion = void 0;
+exports.latestPublishedVersion = void 0;
 const hc = __importStar(__nccwpck_require__(6255));
 // https://storage.googleapis.com/dart-archive/channels/stable/release/latest/VERSION
 // {
@@ -275,19 +360,24 @@ const hc = __importStar(__nccwpck_require__(6255));
 //   "version": "2.19.2",
 //   "revision": "e46b4f59490230778e907bde2eedb06b062d31be"
 // }
-function getLatestVersion(channel, flavor) {
+// Query google storage for the most recent published SDK version for the given
+// channel and flavor.
+function latestPublishedVersion(channel, flavor) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = 'https://storage.googleapis.com/dart-archive/channels/' +
             `${channel}/${flavor}/latest/VERSION`;
         const http = new hc.HttpClient('setup-dart', [], {
-            allowRedirects: true,
-            maxRedirects: 3
+            // todo:
+            // allowRedirects: true,
+            // maxRedirects: 3,
+            allowRetries: true,
+            maxRetries: 3
         });
         const result = (yield http.getJson(url)).result;
         return result == null ? null : result.version;
     });
 }
-exports.getLatestVersion = getLatestVersion;
+exports.latestPublishedVersion = latestPublishedVersion;
 
 
 /***/ }),

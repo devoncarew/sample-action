@@ -1,26 +1,16 @@
-import os from 'os'
+import {arch, platform} from 'os'
 
+// Returns 'linux', 'windows', or 'macos'.
 export function getPlatform(): string {
-  const plat: string = os.platform()
-
-  // return either 'linux', 'windows', or 'macos'
-  if (plat === 'win32') {
-    return 'windows'
-  } else if (plat === 'darwin') {
-    return 'macos'
-  } else {
-    return 'linux'
-  }
+  return platform() === 'win32'
+    ? 'windows'
+    : platform() === 'darwin'
+    ? 'macos'
+    : 'linux'
 }
 
+// Returns 'x64', 'ia32', 'arm', or 'arm64'.
 export function getArch(): string {
-  // return 'x64', 'ia32', 'arm', or 'arm64'
   const supported = ['x64', 'ia32', 'arm', 'arm64']
-
-  const arch: string = os.arch()
-  if (supported.includes(arch)) {
-    return arch
-  } else {
-    return 'x64'
-  }
+  return supported.includes(arch()) ? arch() : 'x64'
 }

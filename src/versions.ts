@@ -7,7 +7,9 @@ import * as hc from '@actions/http-client'
 //   "revision": "e46b4f59490230778e907bde2eedb06b062d31be"
 // }
 
-export async function getLatestVersion(
+// Query google storage for the most recent published SDK version for the given
+// channel and flavor.
+export async function latestPublishedVersion(
   channel: string,
   flavor: string
 ): Promise<string | null> {
@@ -16,8 +18,11 @@ export async function getLatestVersion(
     `${channel}/${flavor}/latest/VERSION`
 
   const http = new hc.HttpClient('setup-dart', [], {
-    allowRedirects: true,
-    maxRedirects: 3
+    // todo:
+    // allowRedirects: true,
+    // maxRedirects: 3,
+    allowRetries: true,
+    maxRetries: 3
   })
 
   const result = (await http.getJson<IVersionData>(url)).result
